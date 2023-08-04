@@ -177,12 +177,11 @@ public class ATMmachine{
 			while(rs.next()){
 				accountNumber = rs.getInt("acc_no");
 			}
-			System.out.print(accountNumber);
 			
 			String query = "SELECT * FROM transaction WHERE acc_no = '"+accountNumber+"'";
 			rs = stat.executeQuery(query);
 			
-			System.out.println("Account Number		Transaction Date		Debit Amount		Credit Amount		Balance");
+			System.out.println("Account Number		Transaction Date	        Debit Amount          Credit Amount    	       Balance");
 			while(rs.next()){
 				displayAcc = rs.getInt("acc_no");
 				displayTransactionDate = rs.getString("transaction_date");
@@ -226,6 +225,7 @@ public class ATMmachine{
 			}else{
 				System.out.println("Confirm PIN should be equivalent to new PIN!!!");
 			}
+			System.exit(0);
 		}else{
 			System.out.println("Invalid old PIN!!!");
 			display(stat);
