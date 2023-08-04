@@ -2,11 +2,9 @@ import java.util.*;
 import java.sql.*;
 public class ATMmachine{
 	static Scanner sc = new Scanner(System.in);
+	/*static int accountNumber;*/
+	static int id;
 	static int actualCardNo;
-	static int actualPinNo;
-	static double balance;
-	static double existingBalance;
-	static float actualAmount;
 	static int displayAcc;
 	static String displayTransactionDate;
 	static float displayDebitAmount;
@@ -33,10 +31,13 @@ public class ATMmachine{
 					break;
 				case 2:
 					try{
+						System.out.print("Enter your ID :");
+						id = sc.nextInt();
+						
 						System.out.print("Enter your card number :");
 						int cardNo = sc.nextInt();
 						
-						String card = "SELECT acc_no FROM account";
+						String card = "SELECT acc_no FROM account WHERE id = '"+id+"'";
 						ResultSet rs = stat.executeQuery(card);
 						
 						while(rs.next()){
@@ -80,23 +81,29 @@ public class ATMmachine{
 	}
 	
 	static void validate(Statement stat){
-		try{
-			System.out.print("Enter your PIN :");
-			int pinNo = sc.nextInt();
-			
-			String pin = "SELECT pin_no FROM account";
+		try{			
+			String pin = "SELECT pin_no FROM account Where id = '"+id+"'";
 			ResultSet rs = stat.executeQuery(pin);
 			/*int actualPinNo = rs.getInt("pin_no");*/
-			/*int actualPinNo;*/
+			int existedPin = 0;
 			while(rs.next()){
-				actualPinNo = rs.getInt("pin_no");
+				existedPin = rs.getInt("pin_no");
 			}
 			
-			if(pinNo == actualPinNo){
-				display(stat);
-			}else{
-				System.out.println("Invalid PIN number!!!");
+			int attempt = 3;
+			for(int i = 0; i <= attempt; attempt--){
+				System.out.print("Enter your PIN :");
+				int pinNo = sc.nextInt();
+				
+				if(pinNo == existedPin){
+					display(stat);
+					break;
+				}else{
+					System.out.println("Invalid PIN number!!!");
+					System.out.println("Attmept left :" + attempt);
+				}
 			}
+			System.out.print("Your card has been blocked!!, Please contact your nearest bank");
 			/*System.out.print(actualPinNo);*/
 		}catch(SQLException e){
 			e.printStackTrace();
@@ -127,7 +134,11 @@ public class ATMmachine{
 				bankStatement(stat);
 				break;
 			case 3:
-				pinChange(stat);
+				try{
+					pinChange(stat);
+				}catch(SQLException e){
+					e.printStackTrace();
+				}
 				break;
 			case 4:
 				deposit(stat);
@@ -145,16 +156,13 @@ public class ATMmachine{
 	}
 	
 	static void balanceEnquiry(Statement stat) throws SQLException{
-		String amount = "SELECT balance FROM account";
-		/*DBConnection db = new DBConnection();
-		Connection conn = db.getConnection();
-		Statement stat = conn.createStatement();*/
+		String amount = "SELECT balance FROM account WHERE id = '"+id+"'";
 		ResultSet rs = stat.executeQuery(amount);
 		
+		double balance = 0;
 		while(rs.next()){
 			balance = rs.getDouble("balance");
 		}
-		System.out.println("balance");
 		System.out.println("Your current bank balance is :"+ balance);
 		display(stat);
 	}
@@ -162,8 +170,18 @@ public class ATMmachine{
 	static void bankStatement(Statement stat){
 		try{
 			System.out.println("Bank Statement!!!");
-			String query = "SELECT * FROM transaction";
-			ResultSet rs = stat.executeQuery(query);
+			String query1 = "SELECT acc_no FROM account WHERE id = '"+id+"'";
+			ResultSet rs = stat.executeQuery(query1);
+			
+			int accountNumber = 0;
+			while(rs.next()){
+				accountNumber = rs.getInt("acc_no");
+			}
+			System.out.print(accountNumber);
+			
+			String query = "SELECT * FROM transaction WHERE acc_no = '"+accountNumber+"'";
+			rs = stat.executeQuery(query);
+			
 			System.out.println("Account Number		Transaction Date		Debit Amount		Credit Amount		Balance");
 			while(rs.next()){
 				displayAcc = rs.getInt("acc_no");
@@ -179,10 +197,18 @@ public class ATMmachine{
 		}
 	}
 	
-	static void pinChange(Statement stat){
+	static void pinChange(Statement stat) throws SQLException{
+		String query = "SELECT pin_no FROM account WHERE id = '"+id+"'";
+		ResultSet rs = stat.executeQuery(query);
+		
+		int existedPin = 0;
+		while(rs.next()){
+			existedPin = rs.getInt("pin_no");
+		}
+		
 		System.out.print("Enter your old PIN :");
 		int oldPin = sc.nextInt();
-		if(oldPin == actualPinNo){
+		if(oldPin == existedPin){
 			System.out.print("Enter your new PIN :");
 			int newPin = sc.nextInt();
 			System.out.print("Confirm PIN :");
@@ -192,14 +218,13 @@ public class ATMmachine{
 					/*DBConnection db = new DBConnection();
 					Connection conn = db.getConnection();
 					Statement stat = conn.createStatement();*/
-					String query = "UPDATE account SET pin_no = '"+confirmPin+"'";
-					stat.executeUpdate(query);
+					String query1 = "UPDATE account SET pin_no = '"+confirmPin+"' WHERE id = '"+id+"'";
+					stat.executeUpdate(query1);
 					}catch(SQLException e){
 						e.printStackTrace();
 					}
 			}else{
 				System.out.println("Confirm PIN should be equivalent to new PIN!!!");
-				display(stat);
 			}
 		}else{
 			System.out.println("Invalid old PIN!!!");
@@ -211,18 +236,31 @@ public class ATMmachine{
 		try{
 			System.out.print("Deposit into bank account :");
 			float amount = sc.nextFloat();
-			String query = "SELECT balance FROM account";
-			ResultSet rs = stat.executeQuery(query);
+			
+			String query3 = "SELECT acc_no FROM  account WHERE id = '"+id+"'";
+			ResultSet rs = stat.executeQuery(query3);
+			
+			int accountNumber = 0;
+			while(rs.next()){
+				accountNumber = rs.getInt("acc_no");
+			}
+			
+			String query = "SELECT balance FROM account WHERE acc_no = '"+accountNumber+"'";
+			rs = stat.executeQuery(query);
+			
+			double existingBalance = 0;
 			while(rs.next()){
 				existingBalance = rs.getDouble("balance");
 			}
-			
-			double newBalance = amount + existingBalance;			
+
+			double newBalance = existingBalance + amount;			
 			String query1 = "INSERT INTO transaction (acc_no, credit_amount, balance) VALUES ('"+actualCardNo+"', '"+amount+"', '"+newBalance+"')";
 			stat.executeUpdate(query1);
 
-			String query2 = "UPDATE account SET balance = '"+newBalance+"'";
+			String query2 = "UPDATE account SET balance = '"+newBalance+"' WHERE id = '"+id+"'";
 			stat.executeUpdate(query2);
+			
+			System.exit(0);
 		}catch(SQLException e){
 			e.printStackTrace();
 		}
@@ -233,19 +271,31 @@ public class ATMmachine{
 			System.out.println();
 			System.out.print("Enter withdrawal amount :");
 			float amount = sc.nextFloat();
-		
-			String query = "SELECT balance FROM transaction";
-			ResultSet rs = stat.executeQuery(query);
+			
+			String query3 = "SELECT acc_no FROM  account WHERE id = '"+id+"'";
+			ResultSet rs = stat.executeQuery(query3);	
+			
+			int accountNumber = 0;
 			while(rs.next()){
-				actualAmount = rs.getFloat("balance");
+				accountNumber = rs.getInt("acc_no");
 			}
-			float newBalanceAfterWithdrawal = actualAmount - amount;
+		
+			String query = "SELECT balance FROM transaction WHERE acc_no = '"+accountNumber+"'";
+			rs = stat.executeQuery(query);
+			
+			double actualAmount = 0;
+			while(rs.next()){
+				actualAmount = rs.getDouble("balance");
+			}
+			double newBalanceAfterWithdrawal = actualAmount - amount;
 		
 			String query1 = "INSERT INTO transaction (acc_no, debit_amount, balance) VALUES ('"+actualCardNo+"', '"+amount+"', '"+newBalanceAfterWithdrawal+"')";
 			stat.executeUpdate(query1);
 		
-			String query2 = "UPDATE account SET balance = '"+newBalanceAfterWithdrawal+"'";
+			String query2 = "UPDATE account SET balance = '"+newBalanceAfterWithdrawal+"' WHERE id = '"+id+"'";
 			stat.executeUpdate(query2);
+			
+			System.exit(0);
 		}catch(SQLException e){
 			e.printStackTrace();
 		}
