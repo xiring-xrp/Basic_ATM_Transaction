@@ -2,14 +2,7 @@ import java.util.*;
 import java.sql.*;
 public class ATMmachine{
 	static Scanner sc = new Scanner(System.in);
-	/*static int accountNumber;*/
 	static int id;
-	static int actualCardNo;
-	static int displayAcc;
-	static String displayTransactionDate;
-	static float displayDebitAmount;
-	static float displayCreditAmount;
-	static double displayBalance;
 	
 	public static void main(String[] args){
 		try{
@@ -40,11 +33,12 @@ public class ATMmachine{
 						String card = "SELECT acc_no FROM account WHERE id = '"+id+"'";
 						ResultSet rs = stat.executeQuery(card);
 						
+						int accountNumber = 0;
 						while(rs.next()){
-							actualCardNo = rs.getInt("acc_no");
+							accountNumber = rs.getInt("acc_no");
 						}
 						
-						if(cardNo == actualCardNo){
+						if(cardNo == accountNumber){
 							validate(stat);
 						}else{
 							System.out.println("Invalid Card Number!!");
@@ -141,7 +135,7 @@ public class ATMmachine{
 				}
 				break;
 			case 4:
-				deposit(stat);
+				deposite(stat);
 				break;
 			case 5:
 				withdraw(stat);
@@ -182,6 +176,11 @@ public class ATMmachine{
 			rs = stat.executeQuery(query);
 			
 			System.out.println("Account Number		Transaction Date	        Debit Amount          Credit Amount    	       Balance");
+			int displayAcc = 0;
+			String displayTransactionDate;
+			float displayDebitAmount = 0;
+			float displayCreditAmount = 0;
+			double displayBalance = 0;
 			while(rs.next()){
 				displayAcc = rs.getInt("acc_no");
 				displayTransactionDate = rs.getString("transaction_date");
@@ -232,9 +231,9 @@ public class ATMmachine{
 		}		
 	}
 	
-	static void deposit(Statement stat){
+	static void deposite(Statement stat){
 		try{
-			System.out.print("Deposit into bank account :");
+			System.out.print("Deposite into bank account :");
 			float amount = sc.nextFloat();
 			
 			String query3 = "SELECT acc_no FROM  account WHERE id = '"+id+"'";
@@ -253,12 +252,18 @@ public class ATMmachine{
 				existingBalance = rs.getDouble("balance");
 			}
 
-			double newBalance = existingBalance + amount;			
-			String query1 = "INSERT INTO transaction (acc_no, credit_amount, balance) VALUES ('"+actualCardNo+"', '"+amount+"', '"+newBalance+"')";
-			stat.executeUpdate(query1);
+			if(amount < 1000){
+				System.out.println("Sorry, You cannot deposite amount less than 1000");
+			}else if(amount > 25000){
+				System.out.println("Sorry, You cannot deposite amount more than 25000");
+			}else{
+				double newBalance = existingBalance + amount;			
+				String query1 = "INSERT INTO transaction (acc_no, credit_amount, balance) VALUES ('"+accountNumber+"', '"+amount+"', '"+newBalance+"')";
+				stat.executeUpdate(query1);
 
-			String query2 = "UPDATE account SET balance = '"+newBalance+"' WHERE id = '"+id+"'";
-			stat.executeUpdate(query2);
+				String query2 = "UPDATE account SET balance = '"+newBalance+"' WHERE id = '"+id+"'";
+				stat.executeUpdate(query2);
+			}
 			
 			System.exit(0);
 		}catch(SQLException e){
@@ -287,13 +292,19 @@ public class ATMmachine{
 			while(rs.next()){
 				actualAmount = rs.getDouble("balance");
 			}
-			double newBalanceAfterWithdrawal = actualAmount - amount;
+			
+			if(amount < 1000){
+				System.out.println("Sorry, You cannot withdraw amount less than 1000");
+			}else if(amount > 25000){
+				System.out.println("Sorry, You cannot withdraw amount more than 25000");
+			}else{
+				double newBalanceAfterWithdrawal = actualAmount - amount;
+				String query1 = "INSERT INTO transaction (acc_no, debit_amount, balance) VALUES ('"+accountNumber+"', '"+amount+"', '"+newBalanceAfterWithdrawal+"')";
+				stat.executeUpdate(query1);
 		
-			String query1 = "INSERT INTO transaction (acc_no, debit_amount, balance) VALUES ('"+actualCardNo+"', '"+amount+"', '"+newBalanceAfterWithdrawal+"')";
-			stat.executeUpdate(query1);
-		
-			String query2 = "UPDATE account SET balance = '"+newBalanceAfterWithdrawal+"' WHERE id = '"+id+"'";
-			stat.executeUpdate(query2);
+				String query2 = "UPDATE account SET balance = '"+newBalanceAfterWithdrawal+"' WHERE id = '"+id+"'";
+				stat.executeUpdate(query2);
+			}
 			
 			System.exit(0);
 		}catch(SQLException e){
