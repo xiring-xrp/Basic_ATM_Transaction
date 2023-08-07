@@ -112,9 +112,10 @@ public class ATMmachine{
 		System.out.println("3. PIN change");
 		System.out.println("4. Deposit");
 		System.out.println("5. Withdraw");
-		System.out.println("6. Exit");
-		
+		System.out.println("6. Fast cash");
+		System.out.println("7. Exit");
 		System.out.print("Enter your transaction :");
+		
 		int choice = sc.nextInt();
 		switch(choice){
 			case 1:
@@ -141,6 +142,13 @@ public class ATMmachine{
 				withdraw(stat);
 				break;
 			case 6:
+				try{
+					fastCash(stat);
+					break;
+				}catch(SQLException e){
+					e.printStackTrace();
+				}
+			case 7:
 				exit();
 				break;
 			default:
@@ -264,7 +272,7 @@ public class ATMmachine{
 				String query2 = "UPDATE account SET balance = '"+newBalance+"' WHERE id = '"+id+"'";
 				stat.executeUpdate(query2);
 			}
-			
+			System.out.println("You have deposited " + amount + " into your bank account Successfully");
 			System.exit(0);
 		}catch(SQLException e){
 			e.printStackTrace();
@@ -305,10 +313,102 @@ public class ATMmachine{
 				String query2 = "UPDATE account SET balance = '"+newBalanceAfterWithdrawal+"' WHERE id = '"+id+"'";
 				stat.executeUpdate(query2);
 			}
-			
+			System.out.println("Your withdrawal amount is " + amount);
 			System.exit(0);
 		}catch(SQLException e){
 			e.printStackTrace();
+		}
+	}
+	
+	static void fastCash(Statement stat)throws SQLException{
+		String query = "SELECT acc_no FROM account WHERE id = '"+id+"'";
+		ResultSet rs = stat.executeQuery(query);
+		
+		int accountNumber = 0;
+		while(rs.next()){
+			accountNumber = rs.getInt("acc_no");
+		}
+				
+		String query1 = "SELECT balance FROM transaction WHERE acc_no = '"+accountNumber+"'";
+		rs = stat.executeQuery(query1);
+				
+		double actualAmount = 0;
+		while(rs.next()){
+			actualAmount = rs.getDouble("balance");
+		}
+	
+		System.out.println();
+		System.out.println("1. 1000");
+		System.out.println("2. 1500");
+		System.out.println("3. 2000");
+		System.out.println("4. 3000");
+		System.out.println("5. 5000");
+		System.out.println("6. Exit");
+		System.out.print("Enter your transaction :");
+		
+		int choice = sc.nextInt();
+		switch(choice){
+			case 1:
+				float amount1 = 1000;
+				double newBalanceAfterWithdrawal1 = actualAmount - amount1;
+				String query2 = "INSERT INTO transaction (acc_no, debit_amount, balance) VALUES ('"+accountNumber+"', '"+amount1+"', '"+newBalanceAfterWithdrawal1+"')";
+				stat.executeUpdate(query2);
+				
+				String query3 = "UPDATE account SET balance = '"+newBalanceAfterWithdrawal1+"' WHERE id = '"+id+"'";
+				stat.executeUpdate(query3);
+				System.out.println("Your withdrawal amount is " + amount1);
+				System.exit(0);
+				break;
+			case 2:				
+				float amount2 = 1500;
+				double newBalanceAfterWithdrawal2 = actualAmount - amount2;
+				String query4 = "INSERT INTO transaction (acc_no, debit_amount, balance) VALUES ('"+accountNumber+"', '"+amount2+"', '"+newBalanceAfterWithdrawal2+"')";
+				stat.executeUpdate(query4);
+				
+				String query5 = "UPDATE account SET balance = '"+newBalanceAfterWithdrawal2+"' WHERE id = '"+id+"'";
+				stat.executeUpdate(query5);
+				System.out.println("Your withdrawal amount is " + amount2);
+				System.exit(0);
+				break;
+			case 3:
+				float amount3 = 2000;
+				double newBalanceAfterWithdrawal3 = actualAmount - amount3;
+				String query6 = "INSERT INTO transaction (acc_no, debit_amount, balance) VALUES ('"+accountNumber+"', '"+amount3+"', '"+newBalanceAfterWithdrawal3+"')";
+				stat.executeUpdate(query6);
+				
+				String query7 = "UPDATE account SET balance = '"+newBalanceAfterWithdrawal3+"' WHERE id = '"+id+"'";
+				stat.executeUpdate(query7);
+				System.out.println("Your withdrawal amount is " + amount3);
+				System.exit(0);
+				break;
+			case 4:
+				float amount4 = 3000;
+				double newBalanceAfterWithdrawal4 = actualAmount - amount4;
+				String query8 = "INSERT INTO transaction (acc_no, debit_amount, balance) VALUES ('"+accountNumber+"', '"+amount4+"', '"+newBalanceAfterWithdrawal4+"')";
+				stat.executeUpdate(query8);
+				
+				String query9 = "UPDATE account SET balance = '"+newBalanceAfterWithdrawal4+"' WHERE id = '"+id+"'";
+				stat.executeUpdate(query9);
+				System.out.println("Your withdrawal amount is " + amount4);
+				System.exit(0);
+				break;
+			case 5:
+				float amount5 = 5000;
+				double newBalanceAfterWithdrawal5 = actualAmount - amount5;
+				String query10 = "INSERT INTO transaction (acc_no, debit_amount, balance) VALUES ('"+accountNumber+"', '"+amount5+"', '"+newBalanceAfterWithdrawal5+"')";
+				stat.executeUpdate(query10);
+				
+				String query11 = "UPDATE account SET balance = '"+newBalanceAfterWithdrawal5+"' WHERE id = '"+id+"'";
+				stat.executeUpdate(query11);
+				System.out.println("Your withdrawal amount is " + amount5);
+				System.exit(0);
+				break;
+			case 6:
+				display(stat);
+				break;
+			default:
+				System.out.println("Invalid transaction!!!");
+				break;
 		}
 	}
 	
